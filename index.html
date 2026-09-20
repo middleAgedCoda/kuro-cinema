@@ -168,6 +168,9 @@
       <textarea id="r_script" placeholder="What should the character say in this clip?"></textarea>
       <label>Motion / scene direction (optional)</label>
       <input type="text" id="r_motion" placeholder="e.g. subtle idle sway, occasional blink, standing still">
+      <label>Or: paste an already-generated motion clip URL (skips auto-generation)</label>
+      <input type="url" id="r_motionurl" placeholder="https://raw.githubusercontent.com/.../motion.mp4">
+      <div class="hint">Use this if you generated the motion clip by hand (e.g. Vidu's free consumer site) instead of paying for the API.</div>
       <button class="primary" id="runBtn">Generate clip</button>
     </div>
 
@@ -394,15 +397,22 @@ runBtn.onclick = async ()=>{
     setStep('tts','done','audio ready');
 
     // 2. Motion
-    setStep('motion','active','submitting motion job...');
-    const motionRes = await proxyFetch('/motion', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ imageUrl: char.image, direction: motion || 'subtle idle sway, natural blinking, standing still' })
-    });
-    const motionSubmit = await motionRes.json(); // expect { jobId }
-    const motionResult = await pollJob('/motion/status', motionSubmit.jobId,
-      d=>setStep('motion','active','rendering motion... '+(d.progress||'')));
-    setStep('motion','done','motion clip ready');
+    const manualMotionUrl = r_motionurl.value.trim();
+    let motionResult;
+    if (manualMotionUrl) {
+      setStep('motion','done','using your provided clip (skipped API)');
+      motionResult = { videoUrl: manualMotionUrl };
+    } else {
+      setStep('motion','active','submitting motion job...');
+      const motionRes = await proxyFetch('/motion', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ imageUrl: char.image, direction: motion || 'subtle idle sway, natural blinking, standing still' })
+      });
+      const motionSubmit = await motionRes.json(); // expect { jobId }
+      motionResult = await pollJob('/motion/status', motionSubmit.jobId,
+        d=>setStep('motion','active','rendering motion... '+(d.progress||'')));
+      setStep('motion','done','motion clip ready');
+    }
 
     // 3. Lip-sync
     setStep('sync','active','submitting lip-sync job...');
