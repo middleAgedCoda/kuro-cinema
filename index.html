@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KURO CINEMA — Character-to-Cinema Pipeline</title>
+<style>
+  :root{
+    --bg:#0c0b09;
+    --surface:#151109;
+    --surface-raised:#1e1810;
+    --line:#332a1a;
+    --line-bright:#5a4321;
+    --text:#f2ede4;
+    --muted:#9c9284;
+    --accent:#e8a23d;
+    --accent-dim:#8a5a1e;
+    --ok:#4fa37d;
+    --err:#c4491a;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); line-height:1.5;
+  }
+  header{
+    border-bottom:1px solid var(--line);
+    padding:18px 20px;
+    display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+  header h1{
+    font-family:var(--mono); font-size:15px; letter-spacing:0.02em;
+    margin:0; font-weight:600; color:var(--text);
+  }
+  header h1 span{color:var(--accent);}
+  header .sub{font-family:var(--mono); font-size:11px; color:var(--muted);}
+  nav{
+    display:flex; gap:2px; padding:0 20px; border-bottom:1px solid var(--line);
+    background:var(--surface);
+  }
+  nav button{
+    background:none; border:none; color:var(--muted); font-family:var(--mono);
+    font-size:12px; padding:12px 14px; cursor:pointer; border-bottom:2px solid transparent;
+  }
+  nav button.active{color:var(--accent); border-bottom-color:var(--accent);}
+  main{padding:20px; max-width:920px; margin:0 auto;}
+  .panel{
+    display:none;
+  }
+  .panel.active{display:block;}
+  .grid{display:grid; grid-template-columns:1fr; gap:16px;}
+  @media(min-width:720px){.grid.two{grid-template-columns:1fr 1fr;}}
+  .card{
+    background:var(--surface); border:1px solid var(--line); padding:16px;
+  }
+  label{
+    display:block; font-family:var(--mono); font-size:11px; color:var(--muted);
+    margin-bottom:5px; margin-top:14px;
+  }
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=url], input[type=password], textarea, select{
+    width:100%; background:var(--bg); border:1px solid var(--line); color:var(--text);
+    padding:9px 10px; font-family:var(--sans); font-size:14px;
+  }
+  input:focus, textarea:focus, select:focus{outline:1px solid var(--accent); border-color:var(--accent);}
+  textarea{resize:vertical; min-height:70px;}
+  .hint{font-size:12px; color:var(--muted); margin-top:5px;}
+  button.primary{
+    background:var(--accent); color:#1a1206; border:none; font-family:var(--mono);
+    font-size:13px; font-weight:600; padding:11px 18px; cursor:pointer; margin-top:16px;
+  }
+  button.primary:disabled{background:var(--accent-dim); color:#6b5a3a; cursor:not-allowed;}
+  button.ghost{
+    background:none; border:1px solid var(--line-bright); color:var(--text);
+    font-family:var(--mono); font-size:12px; padding:8px 12px; cursor:pointer;
+  }
+  button.danger{border-color:var(--err); color:var(--err);}
+  .char-list{display:flex; flex-direction:column; gap:8px;}
+  .char-row{
+    display:flex; align-items:center; gap:10px; border:1px solid var(--line);
+    padding:8px; cursor:pointer; background:var(--surface);
+  }
+  .char-row.selected{border-color:var(--accent);}
+  .char-row img{width:36px; height:36px; object-fit:cover; background:var(--bg);}
+  .char-row .noimg{width:36px; height:36px; background:var(--bg); border:1px solid var(--line); font-family:var(--mono); font-size:9px; color:var(--muted); display:flex; align-items:center; justify-content:center;}
+  .char-row .meta{flex:1; min-width:0;}
+  .char-row .meta .name{font-weight:600; font-size:14px;}
+  .char-row .meta .tag{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .step{
+    border-left:2px solid var(--line); padding:2px 0 20px 16px; position:relative;
+  }
+  .step::before{
+    content:attr(data-n); position:absolute; left:-11px; top:0;
+    width:20px; height:20px; background:var(--bg); border:1px solid var(--line-bright);
+    color:var(--muted); font-family:var(--mono); font-size:10px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step.active::before{border-color:var(--accent); color:var(--accent);}
+  .step.done::before{border-color:var(--ok); color:var(--ok); content:"✓";}
+  .step.error::before{border-color:var(--err); color:var(--err); content:"!";}
+  .step h3{margin:0 0 4px 0; font-size:14px;}
+  .step .status{font-family:var(--mono); font-size:12px; color:var(--muted);}
+  .status.ok{color:var(--ok);}
+  .status.err{color:var(--err);}
+  video{width:100%; margin-top:10px; background:#000;}
+  .warn{
+    background:#241708; border:1px solid var(--accent-dim); color:var(--accent);
+    padding:10px 12px; font-size:12px; margin-bottom:16px; font-family:var(--mono);
+  }
+  .empty{color:var(--muted); font-size:13px; padding:20px; text-align:center; border:1px dashed var(--line);}
+  .row{display:flex; gap:8px; flex-wrap:wrap;}
+  .row > *{flex:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>KURO <span>CINEMA</span></h1>
+  <div class="sub">character-to-cinema pipeline // v0.1 watermarked</div>
+</header>
+
+<nav>
+  <button data-panel="bible" class="active">Character Bible</button>
+  <button data-panel="run">Run Pipeline</button>
+  <button data-panel="settings">Settings</button>
+</nav>
+
+<main>
+
+  <!-- CHARACTER BIBLE -->
+  <div class="panel active" id="panel-bible">
+    <div class="grid two">
+      <div class="card">
+        <label>Characters</label>
+        <div class="char-list" id="charList"></div>
+        <button class="ghost" id="newCharBtn" style="margin-top:10px;">+ New character</button>
+      </div>
+      <div class="card" id="charEditor">
+        <label>Name</label>
+        <input type="text" id="f_name" placeholder="Spark">
+        <label>Handle / tagline</label>
+        <input type="text" id="f_tagline" placeholder="Keeping things perfectly imperfect, one flicker at a time.">
+        <label>Reference image URL</label>
+        <input type="url" id="f_image" placeholder="https://...">
+        <div class="hint">Paste a hosted image URL. Used as the locked visual identity for motion generation.</div>
+        <label>Voice — ElevenLabs voice ID</label>
+        <input type="text" id="f_voiceid" placeholder="e.g. 21m00Tcm4TlvDq8ikWAM (stock) or your cloned voice ID">
+        <div class="hint">No clone yet? Use any stock voice ID from your ElevenLabs Voice Library for the watermarked test.</div>
+        <label>Personality / vibe notes</label>
+        <textarea id="f_notes" placeholder="Short internal notes — tone, energy, world context. Not sent to any API."></textarea>
+        <div class="row">
+          <button class="primary" id="saveCharBtn">Save character</button>
+          <button class="ghost danger" id="deleteCharBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RUN PIPELINE -->
+  <div class="panel" id="panel-run">
+    <div class="warn">Watermarked proof-of-concept tier: free-tier motion + lip-sync output. Expect a watermark, 720p or lower, and short duration.</div>
+    <div class="card">
+      <label>Character</label>
+      <select id="r_character"><option value="">— select a character —</option></select>
+      <label>Dialogue / script for this clip</label>
+      <textarea id="r_script" placeholder="What should the character say in this clip?"></textarea>
+      <label>Motion / scene direction (optional)</label>
+      <input type="text" id="r_motion" placeholder="e.g. subtle idle sway, occasional blink, standing still">
+      <button class="primary" id="runBtn">Generate clip</button>
+    </div>
+
+    <div class="card" style="margin-top:16px;" id="pipelineSteps">
+      <div class="step" data-n="1" id="step-tts">
+        <h3>Voice — text to speech</h3>
+        <div class="status" id="status-tts">waiting</div>
+      </div>
+      <div class="step" data-n="2" id="step-motion">
+        <h3>Motion — reference-locked animation</h3>
+        <div class="status" id="status-motion">waiting</div>
+      </div>
+      <div class="step" data-n="3" id="step-sync">
+        <h3>Lip-sync — merge voice onto motion</h3>
+        <div class="status" id="status-sync">waiting</div>
+      </div>
+      <div class="step" data-n="4" id="step-done">
+        <h3>Export</h3>
+        <div class="status" id="status-done">waiting</div>
+        <video id="resultVideo" controls style="display:none;"></video>
+        <a id="downloadLink" class="ghost" style="display:none; text-decoration:none; margin-top:10px; width:fit-content; display:inline-block;">Download .mp4</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <label>Proxy (worker) URL</label>
+      <input type="url" id="s_proxy" placeholder="https://kuro-cinema-proxy.yoursubdomain.workers.dev">
+      <div class="hint">
+        API keys never live in this page. Deploy <code>worker.js</code> (included) to Cloudflare Workers' free tier,
+        set your KLING_API_KEY, ELEVENLABS_API_KEY and SYNC_API_KEY as worker secrets, then paste the worker's URL here.
+        See README.md for the five-minute setup.
+      </div>
+      <button class="primary" id="saveSettingsBtn">Save</button>
+      <div class="hint" id="settingsSaved" style="color:var(--ok); display:none;">Saved.</div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <label>Character bible export</label>
+      <div class="row">
+        <button class="ghost" id="exportBtn">Export JSON</button>
+        <button class="ghost" id="importBtn">Import JSON</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+      <div class="hint">Export your characters to commit alongside the app, or move between browsers/devices.</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ---------- storage ----------
+const store = {
+  get chars(){ return JSON.parse(localStorage.getItem('kc_characters')||'[]'); },
+  set chars(v){ localStorage.setItem('kc_characters', JSON.stringify(v)); },
+  get proxy(){ return localStorage.getItem('kc_proxy')||''; },
+  set proxy(v){ localStorage.setItem('kc_proxy', v); },
+  get selected(){ return localStorage.getItem('kc_selected')||''; },
+  set selected(v){ localStorage.setItem('kc_selected', v); }
+};
+
+// ---------- nav ----------
+document.querySelectorAll('nav button').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.panel).classList.add('active');
+    if(btn.dataset.panel==='run') refreshRunSelect();
+  };
+});
+
+// ---------- character bible ----------
+function uid(){ return 'c_'+Math.random().toString(36).slice(2,10); }
+
+function renderCharList(){
+  const list = document.getElementById('charList');
+  const chars = store.chars;
+  list.innerHTML = '';
+  if(!chars.length){
+    list.innerHTML = '<div class="empty">No characters yet.</div>';
+    return;
+  }
+  chars.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'char-row' + (c.id===store.selected ? ' selected':'');
+    row.innerHTML = `
+      ${c.image ? `<img src="${c.image}" onerror="this.style.display='none'">` : `<div class="noimg">no img</div>`}
+      <div class="meta"><div class="name">${escapeHtml(c.name||'Untitled')}</div><div class="tag">${escapeHtml(c.tagline||'')}</div></div>
+    `;
+    row.onclick = ()=>{ store.selected = c.id; loadCharIntoEditor(c); renderCharList(); };
+    list.appendChild(row);
+  });
+}
+
+function escapeHtml(s){ const d=document.createElement('div'); d.innerText=s||''; return d.innerHTML; }
+
+function loadCharIntoEditor(c){
+  f_name.value = c.name||''; f_tagline.value = c.tagline||''; f_image.value = c.image||'';
+  f_voiceid.value = c.voiceId||''; f_notes.value = c.notes||'';
+}
+
+function clearEditor(){
+  store.selected = '';
+  [f_name,f_tagline,f_image,f_voiceid,f_notes].forEach(el=>el.value='');
+  renderCharList();
+}
+
+newCharBtn.onclick = clearEditor;
+
+saveCharBtn.onclick = ()=>{
+  if(!f_name.value.trim()){ alert('Name required.'); return; }
+  let chars = store.chars;
+  let id = store.selected;
+  const data = { id: id||uid(), name:f_name.value.trim(), tagline:f_tagline.value.trim(),
+    image:f_image.value.trim(), voiceId:f_voiceid.value.trim(), notes:f_notes.value.trim() };
+  const idx = chars.findIndex(c=>c.id===data.id);
+  if(idx>=0) chars[idx]=data; else chars.push(data);
+  store.chars = chars; store.selected = data.id;
+  renderCharList();
+};
+
+deleteCharBtn.onclick = ()=>{
+  if(!store.selected) return;
+  if(!confirm('Delete this character?')) return;
+  store.chars = store.chars.filter(c=>c.id!==store.selected);
+  clearEditor();
+};
+
+// ---------- settings ----------
+s_proxy.value = store.proxy;
+saveSettingsBtn.onclick = ()=>{
+  store.proxy = s_proxy.value.trim();
+  settingsSaved.style.display='block';
+  setTimeout(()=>settingsSaved.style.display='none', 1500);
+};
+
+exportBtn.onclick = ()=>{
+  const blob = new Blob([JSON.stringify(store.chars,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'kuro-character-bible.json'; a.click();
+};
+importBtn.onclick = ()=> importFile.click();
+importFile.onchange = (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const incoming = JSON.parse(reader.result);
+      if(!Array.isArray(incoming)) throw new Error('bad format');
+      const existing = store.chars;
+      const merged = [...existing];
+      incoming.forEach(c=>{
+        if(!merged.find(m=>m.id===c.id)) merged.push(c);
+      });
+      store.chars = merged;
+      renderCharList();
+      alert('Imported '+incoming.length+' character(s).');
+    }catch(err){ alert('Could not read that file as a character bible export.'); }
+  };
+  reader.readAsText(file);
+};
+
+// ---------- run pipeline ----------
+function refreshRunSelect(){
+  const sel = document.getElementById('r_character');
+  const chars = store.chars;
+  sel.innerHTML = '<option value="">— select a character —</option>' +
+    chars.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+}
+
+function setStep(id, state, text){
+  const step = document.getElementById('step-'+id);
+  step.classList.remove('active','done','error');
+  if(state) step.classList.add(state);
+  document.getElementById('status-'+id).textContent = text;
+  document.getElementById('status-'+id).className = 'status' + (state==='error' ? ' err' : state==='done' ? ' ok':'');
+}
+
+async function proxyFetch(path, opts){
+  const base = store.proxy.replace(/\/$/,'');
+  if(!base) throw new Error('No proxy URL set. Add it under Settings.');
+  const res = await fetch(base+path, opts);
+  if(!res.ok){
+    const t = await res.text().catch(()=> '');
+    throw new Error('Proxy error '+res.status+': '+t.slice(0,200));
+  }
+  return res;
+}
+
+async function pollJob(path, jobId, onTick){
+  for(let i=0;i<60;i++){
+    const res = await proxyFetch(path+'/'+jobId, {method:'GET'});
+    const data = await res.json();
+    onTick && onTick(data);
+    if(data.status==='COMPLETED' || data.status==='completed') return data;
+    if(data.status==='FAILED' || data.status==='failed') throw new Error('Job failed: '+(data.error||'unknown'));
+    await new Promise(r=>setTimeout(r, 5000));
+  }
+  throw new Error('Timed out waiting for job.');
+}
+
+runBtn.onclick = async ()=>{
+  const charId = r_character.value;
+  const script = r_script.value.trim();
+  const motion = r_motion.value.trim();
+  if(!charId || !script){ alert('Pick a character and enter dialogue.'); return; }
+  const char = store.chars.find(c=>c.id===charId);
+  if(!store.proxy){ alert('Set your proxy (worker) URL under Settings first.'); return; }
+
+  runBtn.disabled = true;
+  resultVideo.style.display='none'; downloadLink.style.display='none';
+  ['tts','motion','sync','done'].forEach(id=>setStep(id,null,'waiting'));
+
+  try{
+    // 1. TTS
+    setStep('tts','active','generating speech...');
+    const ttsRes = await proxyFetch('/tts', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ voiceId: char.voiceId, text: script })
+    });
+    const ttsData = await ttsRes.json(); // expect { audioUrl }
+    setStep('tts','done','audio ready');
+
+    // 2. Motion
+    setStep('motion','active','submitting motion job...');
+    const motionRes = await proxyFetch('/motion', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ imageUrl: char.image, direction: motion || 'subtle idle sway, natural blinking, standing still' })
+    });
+    const motionSubmit = await motionRes.json(); // expect { jobId }
+    const motionResult = await pollJob('/motion/status', motionSubmit.jobId,
+      d=>setStep('motion','active','rendering motion... '+(d.progress||'')));
+    setStep('motion','done','motion clip ready');
+
+    // 3. Lip-sync
+    setStep('sync','active','submitting lip-sync job...');
+    const syncRes = await proxyFetch('/lipsync', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ videoUrl: motionResult.videoUrl, audioUrl: ttsData.audioUrl })
+    });
+    const syncSubmit = await syncRes.json(); // expect { jobId }
+    const syncResult = await pollJob('/lipsync/status', syncSubmit.jobId,
+      d=>setStep('sync','active','merging... '+(d.progress||'')));
+    setStep('sync','done','lip-sync complete');
+
+    // 4. Done
+    setStep('done','done','clip ready (watermarked test tier)');
+    resultVideo.src = syncResult.videoUrl;
+    resultVideo.style.display='block';
+    downloadLink.href = syncResult.videoUrl;
+    downloadLink.style.display='inline-block';
+
+  }catch(err){
+    const active = document.querySelector('.step.active');
+    if(active) setStep(active.id.replace('step-',''), 'error', err.message);
+    else alert(err.message);
+  }finally{
+    runBtn.disabled = false;
+  }
+};
+
+// ---------- init ----------
+renderCharList();
+refreshRunSelect();
+</script>
+</body>
+</html>
