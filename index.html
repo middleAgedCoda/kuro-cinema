@@ -46,15 +46,11 @@
   }
   nav button.active{color:var(--accent); border-bottom-color:var(--accent);}
   main{padding:20px; max-width:920px; margin:0 auto;}
-  .panel{
-    display:none;
-  }
+  .panel{display:none;}
   .panel.active{display:block;}
   .grid{display:grid; grid-template-columns:1fr; gap:16px;}
   @media(min-width:720px){.grid.two{grid-template-columns:1fr 1fr;}}
-  .card{
-    background:var(--surface); border:1px solid var(--line); padding:16px;
-  }
+  .card{background:var(--surface); border:1px solid var(--line); padding:16px;}
   label{
     display:block; font-family:var(--mono); font-size:11px; color:var(--muted);
     margin-bottom:5px; margin-top:14px;
@@ -88,9 +84,7 @@
   .char-row .meta{flex:1; min-width:0;}
   .char-row .meta .name{font-weight:600; font-size:14px;}
   .char-row .meta .tag{font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .step{
-    border-left:2px solid var(--line); padding:2px 0 20px 16px; position:relative;
-  }
+  .step{border-left:2px solid var(--line); padding:2px 0 20px 16px; position:relative;}
   .step::before{
     content:attr(data-n); position:absolute; left:-11px; top:0;
     width:20px; height:20px; background:var(--bg); border:1px solid var(--line-bright);
@@ -112,24 +106,60 @@
   .empty{color:var(--muted); font-size:13px; padding:20px; text-align:center; border:1px dashed var(--line);}
   .row{display:flex; gap:8px; flex-wrap:wrap;}
   .row > *{flex:1;}
+
+  /* ---- storyboard-specific ---- */
+  .project-row{display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .project-row select{flex:1; min-width:140px;}
+  .timeline-rail{
+    display:flex; gap:8px; overflow-x:auto; padding:4px 2px 14px 2px; margin-bottom:4px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .shot-chip{
+    flex:0 0 auto; width:92px; border:1px solid var(--line); background:var(--surface);
+    padding:8px; cursor:pointer; text-align:center; position:relative;
+  }
+  .shot-chip.active{border-color:var(--accent); background:var(--surface-raised);}
+  .shot-chip .n{font-family:var(--mono); font-size:10px; color:var(--muted);}
+  .shot-chip .who{font-size:12px; font-weight:600; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .shot-chip .dot{
+    width:7px; height:7px; border-radius:50%; margin:5px auto 0 auto; background:var(--line-bright);
+  }
+  .shot-chip.done .dot{background:var(--ok);}
+  .shot-chip.error .dot{background:var(--err);}
+  .shot-chip .rm{
+    position:absolute; top:2px; right:4px; font-size:11px; color:var(--muted); cursor:pointer;
+  }
+  .add-shot-chip{
+    flex:0 0 auto; width:60px; border:1px dashed var(--line-bright); background:none; color:var(--muted);
+    cursor:pointer; font-family:var(--mono); font-size:18px;
+  }
+  .shot-list-row{
+    display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--line);
+    padding:10px 0;
+  }
+  .shot-list-row:last-child{border-bottom:none;}
+  .shot-list-row .idx{font-family:var(--mono); color:var(--muted); font-size:12px; width:22px;}
+  .shot-list-row .info{flex:1; min-width:0;}
+  .shot-list-row .info .line1{font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .shot-list-row .info .line2{font-size:11px; color:var(--muted); font-family:var(--mono);}
 </style>
 </head>
 <body>
 
 <header>
   <h1>KURO <span>CINEMA</span></h1>
-  <div class="sub">character-to-cinema pipeline // v0.1 watermarked</div>
+  <div class="sub">character-to-cinema pipeline // v0.2 storyboard</div>
 </header>
 
 <nav>
   <button data-panel="bible" class="active">Character Bible</button>
-  <button data-panel="run">Run Pipeline</button>
+  <button data-panel="storyboard">Storyboard</button>
   <button data-panel="settings">Settings</button>
 </nav>
 
 <main>
 
-  <!-- CHARACTER BIBLE -->
+  <!-- CHARACTER BIBLE (unchanged from v0.1) -->
   <div class="panel active" id="panel-bible">
     <div class="grid two">
       <div class="card">
@@ -139,15 +169,15 @@
       </div>
       <div class="card" id="charEditor">
         <label>Name</label>
-        <input type="text" id="f_name" placeholder="Spark">
+        <input type="text" id="f_name" placeholder="Kuro">
         <label>Handle / tagline</label>
-        <input type="text" id="f_tagline" placeholder="Keeping things perfectly imperfect, one flicker at a time.">
+        <input type="text" id="f_tagline" placeholder="Small hands, old fire.">
         <label>Reference image URL</label>
         <input type="url" id="f_image" placeholder="https://...">
         <div class="hint">Paste a hosted image URL. Used as the locked visual identity for motion generation.</div>
         <label>Voice — ElevenLabs voice ID</label>
-        <input type="text" id="f_voiceid" placeholder="e.g. 21m00Tcm4TlvDq8ikWAM (stock) or your cloned voice ID">
-        <div class="hint">No clone yet? Use any stock voice ID from your ElevenLabs Voice Library for the watermarked test.</div>
+        <input type="text" id="f_voiceid" placeholder="e.g. EXAVITQu4vr4xnSDxMaL">
+        <div class="hint">Free-tier accounts: use a Default Voice ID, not a Voice Library one (that needs a paid plan via API).</div>
         <label>Personality / vibe notes</label>
         <textarea id="f_notes" placeholder="Short internal notes — tone, energy, world context. Not sent to any API."></textarea>
         <div class="row">
@@ -158,53 +188,66 @@
     </div>
   </div>
 
-  <!-- RUN PIPELINE -->
-  <div class="panel" id="panel-run">
-    <div class="warn">Watermarked proof-of-concept tier: free-tier motion + lip-sync output. Expect a watermark, 720p or lower, and short duration.</div>
-    <div class="card">
-      <label>Character</label>
-      <select id="r_character"><option value="">— select a character —</option></select>
-      <label>Dialogue / script for this clip</label>
-      <textarea id="r_script" placeholder="What should the character say in this clip?"></textarea>
-      <label>Motion / scene direction (optional)</label>
-      <input type="text" id="r_motion" placeholder="e.g. subtle idle sway, occasional blink, standing still">
-      <label>Or: paste an already-generated motion clip URL (skips auto-generation)</label>
-      <input type="url" id="r_motionurl" placeholder="https://raw.githubusercontent.com/.../motion.mp4">
-      <div class="hint">Use this if you generated the motion clip by hand (e.g. Vidu's free consumer site) instead of paying for the API.</div>
-      <button class="primary" id="runBtn">Generate clip</button>
+  <!-- STORYBOARD (v0.2) -->
+  <div class="panel" id="panel-storyboard">
+    <div class="warn">Watermarked proof-of-concept tier. v0.2 generates each shot individually — stitching shots into one film is manual for now (export list at the bottom).</div>
+
+    <div class="project-row">
+      <select id="p_select"></select>
+      <button class="ghost" id="p_newBtn">+ New project</button>
+      <button class="ghost danger" id="p_deleteBtn">Delete project</button>
     </div>
 
-    <div class="card" style="margin-top:16px;" id="pipelineSteps">
-      <div class="step" data-n="1" id="step-tts">
-        <h3>Voice — text to speech</h3>
-        <div class="status" id="status-tts">waiting</div>
+    <div class="timeline-rail" id="timelineRail"></div>
+
+    <div class="card" id="shotCard" style="display:none;">
+      <label>Character</label>
+      <select id="s_character"></select>
+      <label>Dialogue / script for this shot</label>
+      <textarea id="s_script" placeholder="What should the character say in this shot? Leave blank for a non-speaking/ambient shot."></textarea>
+      <label>Camera / motion direction</label>
+      <input type="text" id="s_motion" placeholder="e.g. close-up, subtle idle sway, neutral mouth">
+      <label>Or: paste an already-generated motion clip URL (skips auto-generation)</label>
+      <input type="url" id="s_motionurl" placeholder="https://raw.githubusercontent.com/.../shot.mp4">
+      <div class="hint">Use this if you generated the motion clip by hand instead of paying for the API.</div>
+      <button class="primary" id="processBtn">Process shot</button>
+
+      <div style="margin-top:20px;" id="pipelineSteps">
+        <div class="step" data-n="1" id="step-tts">
+          <h3>Voice — text to speech</h3>
+          <div class="status" id="status-tts">waiting</div>
+        </div>
+        <div class="step" data-n="2" id="step-motion">
+          <h3>Motion — reference-locked animation</h3>
+          <div class="status" id="status-motion">waiting</div>
+        </div>
+        <div class="step" data-n="3" id="step-sync">
+          <h3>Lip-sync — merge voice onto motion</h3>
+          <div class="status" id="status-sync">waiting</div>
+        </div>
+        <div class="step" data-n="4" id="step-done">
+          <h3>Export</h3>
+          <div class="status" id="status-done">waiting</div>
+          <video id="resultVideo" controls style="display:none;"></video>
+          <a id="downloadLink" class="ghost" style="display:none; text-decoration:none; margin-top:10px; width:fit-content; display:inline-block;">Download .mp4</a>
+        </div>
       </div>
-      <div class="step" data-n="2" id="step-motion">
-        <h3>Motion — reference-locked animation</h3>
-        <div class="status" id="status-motion">waiting</div>
-      </div>
-      <div class="step" data-n="3" id="step-sync">
-        <h3>Lip-sync — merge voice onto motion</h3>
-        <div class="status" id="status-sync">waiting</div>
-      </div>
-      <div class="step" data-n="4" id="step-done">
-        <h3>Export</h3>
-        <div class="status" id="status-done">waiting</div>
-        <video id="resultVideo" controls style="display:none;"></video>
-        <a id="downloadLink" class="ghost" style="display:none; text-decoration:none; margin-top:10px; width:fit-content; display:inline-block;">Download .mp4</a>
-      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <label>Shot export list (for manual stitching in CapCut / any editor)</label>
+      <div id="exportList"></div>
     </div>
   </div>
 
-  <!-- SETTINGS -->
+  <!-- SETTINGS (unchanged from v0.1) -->
   <div class="panel" id="panel-settings">
     <div class="card">
       <label>Proxy (worker) URL</label>
       <input type="url" id="s_proxy" placeholder="https://kuro-cinema-proxy.yoursubdomain.workers.dev">
       <div class="hint">
         API keys never live in this page. Deploy <code>worker.js</code> (included) to Cloudflare Workers' free tier,
-        set your KLING_API_KEY, ELEVENLABS_API_KEY and SYNC_API_KEY as worker secrets, then paste the worker's URL here.
-        See README.md for the five-minute setup.
+        set your keys as worker secrets, then paste the worker's URL here.
       </div>
       <button class="primary" id="saveSettingsBtn">Save</button>
       <div class="hint" id="settingsSaved" style="color:var(--ok); display:none;">Saved.</div>
@@ -229,9 +272,18 @@ const store = {
   set chars(v){ localStorage.setItem('kc_characters', JSON.stringify(v)); },
   get proxy(){ return localStorage.getItem('kc_proxy')||''; },
   set proxy(v){ localStorage.setItem('kc_proxy', v); },
-  get selected(){ return localStorage.getItem('kc_selected')||''; },
-  set selected(v){ localStorage.setItem('kc_selected', v); }
+  get charSelected(){ return localStorage.getItem('kc_char_selected')||''; },
+  set charSelected(v){ localStorage.setItem('kc_char_selected', v); },
+  get projects(){ return JSON.parse(localStorage.getItem('kc_projects')||'[]'); },
+  set projects(v){ localStorage.setItem('kc_projects', JSON.stringify(v)); },
+  get activeProjectId(){ return localStorage.getItem('kc_active_project')||''; },
+  set activeProjectId(v){ localStorage.setItem('kc_active_project', v); },
+  get activeShotId(){ return localStorage.getItem('kc_active_shot')||''; },
+  set activeShotId(v){ localStorage.setItem('kc_active_shot', v); }
 };
+
+function uid(prefix){ return prefix+'_'+Math.random().toString(36).slice(2,10); }
+function escapeHtml(s){ const d=document.createElement('div'); d.innerText=s||''; return d.innerHTML; }
 
 // ---------- nav ----------
 document.querySelectorAll('nav button').forEach(btn=>{
@@ -240,75 +292,62 @@ document.querySelectorAll('nav button').forEach(btn=>{
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-'+btn.dataset.panel).classList.add('active');
-    if(btn.dataset.panel==='run') refreshRunSelect();
+    if(btn.dataset.panel==='storyboard') initStoryboard();
   };
 });
 
-// ---------- character bible ----------
-function uid(){ return 'c_'+Math.random().toString(36).slice(2,10); }
-
+// ================= CHARACTER BIBLE (unchanged logic from v0.1) =================
 function renderCharList(){
   const list = document.getElementById('charList');
   const chars = store.chars;
   list.innerHTML = '';
-  if(!chars.length){
-    list.innerHTML = '<div class="empty">No characters yet.</div>';
-    return;
-  }
+  if(!chars.length){ list.innerHTML = '<div class="empty">No characters yet.</div>'; return; }
   chars.forEach(c=>{
     const row = document.createElement('div');
-    row.className = 'char-row' + (c.id===store.selected ? ' selected':'');
+    row.className = 'char-row' + (c.id===store.charSelected ? ' selected':'');
     row.innerHTML = `
       ${c.image ? `<img src="${c.image}" onerror="this.style.display='none'">` : `<div class="noimg">no img</div>`}
       <div class="meta"><div class="name">${escapeHtml(c.name||'Untitled')}</div><div class="tag">${escapeHtml(c.tagline||'')}</div></div>
     `;
-    row.onclick = ()=>{ store.selected = c.id; loadCharIntoEditor(c); renderCharList(); };
+    row.onclick = ()=>{ store.charSelected = c.id; loadCharIntoEditor(c); renderCharList(); };
     list.appendChild(row);
   });
 }
-
-function escapeHtml(s){ const d=document.createElement('div'); d.innerText=s||''; return d.innerHTML; }
-
 function loadCharIntoEditor(c){
-  f_name.value = c.name||''; f_tagline.value = c.tagline||''; f_image.value = c.image||'';
-  f_voiceid.value = c.voiceId||''; f_notes.value = c.notes||'';
+  f_name.value=c.name||''; f_tagline.value=c.tagline||''; f_image.value=c.image||'';
+  f_voiceid.value=c.voiceId||''; f_notes.value=c.notes||'';
 }
-
-function clearEditor(){
-  store.selected = '';
+function clearCharEditor(){
+  store.charSelected='';
   [f_name,f_tagline,f_image,f_voiceid,f_notes].forEach(el=>el.value='');
   renderCharList();
 }
-
-newCharBtn.onclick = clearEditor;
-
+newCharBtn.onclick = clearCharEditor;
 saveCharBtn.onclick = ()=>{
   if(!f_name.value.trim()){ alert('Name required.'); return; }
   let chars = store.chars;
-  let id = store.selected;
-  const data = { id: id||uid(), name:f_name.value.trim(), tagline:f_tagline.value.trim(),
+  let id = store.charSelected;
+  const data = { id: id||uid('c'), name:f_name.value.trim(), tagline:f_tagline.value.trim(),
     image:f_image.value.trim(), voiceId:f_voiceid.value.trim(), notes:f_notes.value.trim() };
   const idx = chars.findIndex(c=>c.id===data.id);
   if(idx>=0) chars[idx]=data; else chars.push(data);
-  store.chars = chars; store.selected = data.id;
+  store.chars = chars; store.charSelected = data.id;
   renderCharList();
 };
-
 deleteCharBtn.onclick = ()=>{
-  if(!store.selected) return;
+  if(!store.charSelected) return;
   if(!confirm('Delete this character?')) return;
-  store.chars = store.chars.filter(c=>c.id!==store.selected);
-  clearEditor();
+  store.chars = store.chars.filter(c=>c.id!==store.charSelected);
+  clearCharEditor();
 };
 
-// ---------- settings ----------
+// ================= SETTINGS (unchanged) =================
 s_proxy.value = store.proxy;
 saveSettingsBtn.onclick = ()=>{
   store.proxy = s_proxy.value.trim();
   settingsSaved.style.display='block';
   setTimeout(()=>settingsSaved.style.display='none', 1500);
 };
-
 exportBtn.onclick = ()=>{
   const blob = new Blob([JSON.stringify(store.chars,null,2)], {type:'application/json'});
   const a = document.createElement('a');
@@ -324,31 +363,193 @@ importFile.onchange = (e)=>{
       if(!Array.isArray(incoming)) throw new Error('bad format');
       const existing = store.chars;
       const merged = [...existing];
-      incoming.forEach(c=>{
-        if(!merged.find(m=>m.id===c.id)) merged.push(c);
-      });
-      store.chars = merged;
-      renderCharList();
+      incoming.forEach(c=>{ if(!merged.find(m=>m.id===c.id)) merged.push(c); });
+      store.chars = merged; renderCharList();
       alert('Imported '+incoming.length+' character(s).');
     }catch(err){ alert('Could not read that file as a character bible export.'); }
   };
   reader.readAsText(file);
 };
 
-// ---------- run pipeline ----------
-function refreshRunSelect(){
-  const sel = document.getElementById('r_character');
+// ================= STORYBOARD (new in v0.2) =================
+function newShot(){
+  return { id: uid('s'), character:'', script:'', motion:'', motionUrl:'',
+    resultUrl:'', status:'idle', stepStatus:{tts:'waiting',motion:'waiting',sync:'waiting',done:'waiting'} };
+}
+function newProject(title){
+  return { id: uid('p'), title: title||'Untitled project', shots: [newShot()] };
+}
+function getActiveProject(){
+  return store.projects.find(p=>p.id===store.activeProjectId);
+}
+function getActiveShot(){
+  const proj = getActiveProject();
+  if(!proj) return null;
+  return proj.shots.find(s=>s.id===store.activeShotId) || proj.shots[0];
+}
+function saveProject(proj){
+  const projects = store.projects;
+  const idx = projects.findIndex(p=>p.id===proj.id);
+  if(idx>=0) projects[idx]=proj; else projects.push(proj);
+  store.projects = projects;
+}
+
+function initStoryboard(){
+  let projects = store.projects;
+  if(!projects.length){
+    const p = newProject('My first film');
+    projects = [p];
+    store.projects = projects;
+    store.activeProjectId = p.id;
+  }
+  if(!store.activeProjectId || !projects.find(p=>p.id===store.activeProjectId)){
+    store.activeProjectId = projects[0].id;
+  }
+  const proj = getActiveProject();
+  if(!store.activeShotId || !proj.shots.find(s=>s.id===store.activeShotId)){
+    store.activeShotId = proj.shots[0].id;
+  }
+  renderProjectSelect();
+  renderCharacterDropdown();
+  renderTimeline();
+  loadActiveShotIntoForm();
+  renderExportList();
+}
+
+function renderProjectSelect(){
+  const sel = document.getElementById('p_select');
+  const projects = store.projects;
+  sel.innerHTML = projects.map(p=>`<option value="${p.id}" ${p.id===store.activeProjectId?'selected':''}>${escapeHtml(p.title)}</option>`).join('');
+}
+p_select.onchange = ()=>{
+  store.activeProjectId = p_select.value;
+  const proj = getActiveProject();
+  store.activeShotId = proj.shots[0].id;
+  renderTimeline(); loadActiveShotIntoForm(); renderExportList();
+};
+p_newBtn.onclick = ()=>{
+  const title = prompt('Project title?', 'New project');
+  if(title===null) return;
+  const p = newProject(title.trim()||'Untitled project');
+  const projects = store.projects; projects.push(p); store.projects = projects;
+  store.activeProjectId = p.id; store.activeShotId = p.shots[0].id;
+  renderProjectSelect(); renderTimeline(); loadActiveShotIntoForm(); renderExportList();
+};
+p_deleteBtn.onclick = ()=>{
+  if(!confirm('Delete this whole project and all its shots?')) return;
+  let projects = store.projects.filter(p=>p.id!==store.activeProjectId);
+  if(!projects.length) projects = [newProject('My first film')];
+  store.projects = projects;
+  store.activeProjectId = projects[0].id;
+  store.activeShotId = projects[0].shots[0].id;
+  renderProjectSelect(); renderTimeline(); loadActiveShotIntoForm(); renderExportList();
+};
+
+function renderCharacterDropdown(){
+  const sel = document.getElementById('s_character');
   const chars = store.chars;
-  sel.innerHTML = '<option value="">— select a character —</option>' +
+  sel.innerHTML = '<option value="">— none / ambient —</option>' +
     chars.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
 }
 
+function renderTimeline(){
+  const rail = document.getElementById('timelineRail');
+  const proj = getActiveProject();
+  rail.innerHTML = '';
+  proj.shots.forEach((shot, i)=>{
+    const chip = document.createElement('div');
+    const chars = store.chars;
+    const charName = chars.find(c=>c.id===shot.character);
+    chip.className = 'shot-chip' + (shot.id===store.activeShotId?' active':'') +
+      (shot.stepStatus.done==='done'?' done':'') + (Object.values(shot.stepStatus).includes('error')?' error':'');
+    chip.innerHTML = `
+      <span class="rm" data-shot="${shot.id}">✕</span>
+      <div class="n">SHOT ${i+1}</div>
+      <div class="who">${charName ? escapeHtml(charName.name) : 'ambient'}</div>
+      <div class="dot"></div>
+    `;
+    chip.onclick = (e)=>{
+      if(e.target.classList.contains('rm')) return;
+      store.activeShotId = shot.id;
+      renderTimeline(); loadActiveShotIntoForm();
+    };
+    chip.querySelector('.rm').onclick = (e)=>{
+      e.stopPropagation();
+      if(proj.shots.length===1){ alert("Can't delete the last shot in a project."); return; }
+      if(!confirm('Delete shot '+(i+1)+'?')) return;
+      proj.shots = proj.shots.filter(s=>s.id!==shot.id);
+      saveProject(proj);
+      if(store.activeShotId===shot.id) store.activeShotId = proj.shots[0].id;
+      renderTimeline(); loadActiveShotIntoForm(); renderExportList();
+    };
+    rail.appendChild(chip);
+  });
+  const addChip = document.createElement('div');
+  addChip.className = 'add-shot-chip';
+  addChip.textContent = '+';
+  addChip.onclick = ()=>{
+    const shot = newShot();
+    proj.shots.push(shot);
+    saveProject(proj);
+    store.activeShotId = shot.id;
+    renderTimeline(); loadActiveShotIntoForm(); renderExportList();
+  };
+  rail.appendChild(addChip);
+}
+
+function loadActiveShotIntoForm(){
+  const shot = getActiveShot();
+  const card = document.getElementById('shotCard');
+  if(!shot){ card.style.display='none'; return; }
+  card.style.display='block';
+  s_character.value = shot.character || '';
+  s_script.value = shot.script || '';
+  s_motion.value = shot.motion || '';
+  s_motionurl.value = shot.motionUrl || '';
+  ['tts','motion','sync','done'].forEach(k=>setStepDisplay(k, shot.stepStatus[k]));
+  const resultVideo = document.getElementById('resultVideo');
+  const downloadLink = document.getElementById('downloadLink');
+  if(shot.resultUrl){
+    resultVideo.src = shot.resultUrl; resultVideo.style.display='block';
+    downloadLink.href = shot.resultUrl; downloadLink.style.display='inline-block';
+  } else {
+    resultVideo.style.display='none'; downloadLink.style.display='none';
+  }
+}
+
+// auto-save form edits into the active shot
+[s_character, s_script, s_motion, s_motionurl].forEach(el=>{
+  el.addEventListener('change', ()=>{
+    const proj = getActiveProject(); const shot = getActiveShot();
+    shot.character = s_character.value; shot.script = s_script.value;
+    shot.motion = s_motion.value; shot.motionUrl = s_motionurl.value;
+    saveProject(proj); renderTimeline(); renderExportList();
+  });
+});
+
+function setStepDisplay(id, state){
+  const step = document.getElementById('step-'+id);
+  step.classList.remove('active','done','error');
+  let text = state, cls = '';
+  if(state==='done'){ step.classList.add('done'); cls='ok'; text = document.getElementById('status-'+id).dataset.doneText || 'done'; }
+  else if(state==='active'){ step.classList.add('active'); }
+  else if(state==='error'){ step.classList.add('error'); cls='err'; text = document.getElementById('status-'+id).dataset.errText || 'error'; }
+  document.getElementById('status-'+id).className = 'status'+(cls?' '+cls:'');
+  document.getElementById('status-'+id).textContent = text;
+}
 function setStep(id, state, text){
+  const shot = getActiveShot();
+  shot.stepStatus[id] = state;
+  const statusEl = document.getElementById('status-'+id);
+  statusEl.dataset.doneText = state==='done'?text:statusEl.dataset.doneText;
+  statusEl.dataset.errText = state==='error'?text:statusEl.dataset.errText;
   const step = document.getElementById('step-'+id);
   step.classList.remove('active','done','error');
   if(state) step.classList.add(state);
-  document.getElementById('status-'+id).textContent = text;
-  document.getElementById('status-'+id).className = 'status' + (state==='error' ? ' err' : state==='done' ? ' ok':'');
+  statusEl.textContent = text;
+  statusEl.className = 'status' + (state==='error'?' err':state==='done'?' ok':'');
+  saveProject(getActiveProject());
+  renderTimeline();
 }
 
 async function proxyFetch(path, opts){
@@ -361,7 +562,6 @@ async function proxyFetch(path, opts){
   }
   return res;
 }
-
 async function pollJob(path, jobId, onTick){
   for(let i=0;i<60;i++){
     const res = await proxyFetch(path+'/'+jobId, {method:'GET'});
@@ -374,76 +574,112 @@ async function pollJob(path, jobId, onTick){
   throw new Error('Timed out waiting for job.');
 }
 
-runBtn.onclick = async ()=>{
-  const charId = r_character.value;
-  const script = r_script.value.trim();
-  const motion = r_motion.value.trim();
-  if(!charId || !script){ alert('Pick a character and enter dialogue.'); return; }
-  const char = store.chars.find(c=>c.id===charId);
+processBtn.onclick = async ()=>{
+  const proj = getActiveProject(); const shot = getActiveShot();
+  shot.character = s_character.value; shot.script = s_script.value;
+  shot.motion = s_motion.value; shot.motionUrl = s_motionurl.value;
+  saveProject(proj);
+
+  const char = store.chars.find(c=>c.id===shot.character);
+  if(shot.script.trim() && !char){ alert('Pick a character to voice this dialogue, or clear the script for an ambient shot.'); return; }
   if(!store.proxy){ alert('Set your proxy (worker) URL under Settings first.'); return; }
 
-  runBtn.disabled = true;
-  resultVideo.style.display='none'; downloadLink.style.display='none';
-  ['tts','motion','sync','done'].forEach(id=>setStep(id,null,'waiting'));
+  processBtn.disabled = true;
+  document.getElementById('resultVideo').style.display='none';
+  document.getElementById('downloadLink').style.display='none';
+  ['tts','motion','sync','done'].forEach(id=>setStep(id, 'waiting', 'waiting'));
 
   try{
-    // 1. TTS
-    setStep('tts','active','generating speech...');
-    const ttsRes = await proxyFetch('/tts', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ voiceId: char.voiceId, text: script })
-    });
-    const ttsData = await ttsRes.json(); // expect { audioUrl }
-    setStep('tts','done','audio ready');
-
-    // 2. Motion
-    const manualMotionUrl = r_motionurl.value.trim();
-    let motionResult;
-    if (manualMotionUrl) {
-      setStep('motion','done','using your provided clip (skipped API)');
-      motionResult = { videoUrl: manualMotionUrl };
+    let audioUrl = null;
+    if(shot.script.trim() && char){
+      setStep('tts','active','generating speech...');
+      const ttsRes = await proxyFetch('/tts', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ voiceId: char.voiceId, text: shot.script })
+      });
+      const ttsData = await ttsRes.json();
+      audioUrl = ttsData.audioUrl;
+      setStep('tts','done','audio ready');
     } else {
+      setStep('tts','done','no dialogue — ambient shot');
+    }
+
+    let motionResult;
+    if(shot.motionUrl.trim()){
+      setStep('motion','done','using your provided clip (skipped API)');
+      motionResult = { videoUrl: shot.motionUrl.trim() };
+    } else if(char){
       setStep('motion','active','submitting motion job...');
       const motionRes = await proxyFetch('/motion', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ imageUrl: char.image, direction: motion || 'subtle idle sway, natural blinking, standing still' })
+        body: JSON.stringify({ imageUrl: char.image, direction: shot.motion || 'subtle idle sway, natural blinking, standing still' })
       });
-      const motionSubmit = await motionRes.json(); // expect { jobId }
+      const motionSubmit = await motionRes.json();
       motionResult = await pollJob('/motion/status', motionSubmit.jobId,
         d=>setStep('motion','active','rendering motion... '+(d.progress||'')));
       setStep('motion','done','motion clip ready');
+    } else {
+      throw new Error('No character and no manual motion clip URL — nothing to generate for this shot.');
     }
 
-    // 3. Lip-sync
-    setStep('sync','active','submitting lip-sync job...');
-    const syncRes = await proxyFetch('/lipsync', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ videoUrl: motionResult.videoUrl, audioUrl: ttsData.audioUrl })
-    });
-    const syncSubmit = await syncRes.json(); // expect { jobId }
-    const syncResult = await pollJob('/lipsync/status', syncSubmit.jobId,
-      d=>setStep('sync','active','merging... '+(d.progress||'')));
-    setStep('sync','done','lip-sync complete');
+    let finalUrl = motionResult.videoUrl;
+    if(audioUrl){
+      setStep('sync','active','submitting lip-sync job...');
+      const syncRes = await proxyFetch('/lipsync', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ videoUrl: motionResult.videoUrl, audioUrl })
+      });
+      const syncSubmit = await syncRes.json();
+      const syncResult = await pollJob('/lipsync/status', syncSubmit.jobId,
+        d=>setStep('sync','active','merging... '+(d.progress||'')));
+      setStep('sync','done','lip-sync complete');
+      finalUrl = syncResult.videoUrl;
+    } else {
+      setStep('sync','done','skipped — no dialogue');
+    }
 
-    // 4. Done
-    setStep('done','done','clip ready (watermarked test tier)');
-    resultVideo.src = syncResult.videoUrl;
-    resultVideo.style.display='block';
-    downloadLink.href = syncResult.videoUrl;
-    downloadLink.style.display='inline-block';
+    setStep('done','done','shot ready (watermarked test tier)');
+    shot.resultUrl = finalUrl;
+    saveProject(proj);
+    const resultVideo = document.getElementById('resultVideo');
+    const downloadLink = document.getElementById('downloadLink');
+    resultVideo.src = finalUrl; resultVideo.style.display='block';
+    downloadLink.href = finalUrl; downloadLink.style.display='inline-block';
+    renderExportList();
 
   }catch(err){
-    const active = document.querySelector('.step.active');
+    const active = document.querySelector('#pipelineSteps .step.active');
     if(active) setStep(active.id.replace('step-',''), 'error', err.message);
     else alert(err.message);
   }finally{
-    runBtn.disabled = false;
+    processBtn.disabled = false;
   }
 };
 
+function renderExportList(){
+  const proj = getActiveProject();
+  const wrap = document.getElementById('exportList');
+  if(!proj || !proj.shots.length){ wrap.innerHTML = '<div class="empty">No shots yet.</div>'; return; }
+  wrap.innerHTML = '';
+  proj.shots.forEach((shot,i)=>{
+    const chars = store.chars;
+    const charName = chars.find(c=>c.id===shot.character);
+    const row = document.createElement('div');
+    row.className = 'shot-list-row';
+    row.innerHTML = `
+      <div class="idx">${i+1}</div>
+      <div class="info">
+        <div class="line1">${charName?escapeHtml(charName.name):'ambient'} — ${escapeHtml((shot.script||'(no dialogue)').slice(0,40))}${shot.script && shot.script.length>40?'…':''}</div>
+        <div class="line2">${shot.resultUrl ? 'ready' : 'not generated yet'}</div>
+      </div>
+      ${shot.resultUrl ? `<a class="ghost" href="${shot.resultUrl}" download style="text-decoration:none;">Download</a>` : ''}
+    `;
+    wrap.appendChild(row);
+  });
+}
+
 // ---------- init ----------
 renderCharList();
-refreshRunSelect();
 </script>
 </body>
 </html>
