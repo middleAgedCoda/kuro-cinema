@@ -382,8 +382,7 @@ function newProject(title){
 function getActiveProject(){
   return store.projects.find(p=>p.id===store.activeProjectId);
 }
-function getActiveShot(){
-  const proj = getActiveProject();
+function getShotFrom(proj){
   if(!proj) return null;
   return proj.shots.find(s=>s.id===store.activeShotId) || proj.shots[0];
 }
@@ -498,7 +497,7 @@ function renderTimeline(){
 }
 
 function loadActiveShotIntoForm(){
-  const shot = getActiveShot();
+  const shot = getShotFrom(getActiveProject());
   const card = document.getElementById('shotCard');
   if(!shot){ card.style.display='none'; return; }
   card.style.display='block';
@@ -520,7 +519,7 @@ function loadActiveShotIntoForm(){
 // auto-save form edits into the active shot
 [s_character, s_script, s_motion, s_motionurl].forEach(el=>{
   el.addEventListener('change', ()=>{
-    const proj = getActiveProject(); const shot = getActiveShot();
+    const proj = getActiveProject(); const shot = getShotFrom(proj);
     shot.character = s_character.value; shot.script = s_script.value;
     shot.motion = s_motion.value; shot.motionUrl = s_motionurl.value;
     saveProject(proj); renderTimeline(); renderExportList();
@@ -537,8 +536,11 @@ function setStepDisplay(id, state){
   document.getElementById('status-'+id).className = 'status'+(cls?' '+cls:'');
   document.getElementById('status-'+id).textContent = text;
 }
+let currentProcessingProject = null;
+let currentProcessingShot = null;
+
 function setStep(id, state, text){
-  const shot = getActiveShot();
+  const shot = currentProcessingShot;
   shot.stepStatus[id] = state;
   const statusEl = document.getElementById('status-'+id);
   statusEl.dataset.doneText = state==='done'?text:statusEl.dataset.doneText;
@@ -548,7 +550,7 @@ function setStep(id, state, text){
   if(state) step.classList.add(state);
   statusEl.textContent = text;
   statusEl.className = 'status' + (state==='error'?' err':state==='done'?' ok':'');
-  saveProject(getActiveProject());
+  saveProject(currentProcessingProject);
   renderTimeline();
 }
 
@@ -575,7 +577,8 @@ async function pollJob(path, jobId, onTick){
 }
 
 processBtn.onclick = async ()=>{
-  const proj = getActiveProject(); const shot = getActiveShot();
+  const proj = getActiveProject(); const shot = getShotFrom(proj);
+  currentProcessingProject = proj; currentProcessingShot = shot;
   shot.character = s_character.value; shot.script = s_script.value;
   shot.motion = s_motion.value; shot.motionUrl = s_motionurl.value;
   saveProject(proj);
